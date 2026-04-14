@@ -1,3 +1,15 @@
+# === LOCAL WORKING FILES — NOT FOR DEPLOYMENT ===
+.claude/
+.claudeignore
+.github/
+CA12.pdf
+CHANGELOG.md
+PROJECT_STATE.md
+QUICKSTART.md
+generate_briefing.py
+Briefing_Document_24332780.pdf
+Project Documents/
+
 # === SECRETS & CREDENTIALS — NEVER PUSH ===
 .env
 .env.*
