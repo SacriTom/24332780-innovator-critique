@@ -30,10 +30,10 @@
 
 | # | Step | Status | Notes |
 |---|------|--------|-------|
-| 1 | Run Innovator Pipeline | Not Started | Save outputs as numbered .md files |
-| 2 | Save index.html and pitch.html | Not Started | Pipeline outputs |
-| 3 | Commit to public GitHub repo | Not Started | Repo name: x-innovator-critique (needs student ID prefix) |
-| 4 | Enable GitHub Pages | Not Started | Both HTML files reachable |
+| 1 | Run Innovator Pipeline | Complete | Steps a-g executed, all .md files generated |
+| 2 | Save index.html and pitch.html | Complete | Landing page + pitch deck created |
+| 3 | Commit to public GitHub repo | Complete | github.com/SacriTom/24332780-innovator-critique |
+| 4 | Enable GitHub Pages | Complete | Pages enabled, deploy via workflow |
 | 5 | Part A: Regulatory Audit | Not Started | 5+ issues table, 100-word risk posture |
 | 6 | Part B: Trust Transfer Audit | Not Started | 3 trust-collapse moments with quotes |
 | 7 | Part C: Research & Correct | Not Started | Verify claims, fix errors, write report |
@@ -47,16 +47,29 @@
 | # | Milestone | Status | Notes |
 |---|-----------|--------|-------|
 | 1 | Project setup | Complete | Initial scaffold |
+| 2 | Pipeline execution (Steps a-g) | Complete | All 8 files generated, HiveMap venture |
+| 3 | GitHub repo + Pages | Complete | Public repo, Pages enabled |
 
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-04-14 | Project created | Assessment scaffold for H9CEAI CA12 |
+| 2026-04-14 | Venture: HiveMap | Drone sensing + TEK for Sahel smallholder agriculture — emerged from 5 parameters |
+| 2026-04-14 | Directory: ai-innovator/projects/HiveMap/ | Match step (h) directory structure from innovator prompt |
+| 2026-04-14 | Repo: 24332780-innovator-critique | Public repo under SacriTom GitHub, student ID 24332780 |
+
+## Key References
+- **Repo:** https://github.com/SacriTom/24332780-innovator-critique
+- **Pages:** https://sacritom.github.io/24332780-innovator-critique/ai-innovator/projects/HiveMap/index.html
+- **Pitch:** https://sacritom.github.io/24332780-innovator-critique/ai-innovator/projects/HiveMap/pitch.html
+- **Pipeline params:** Mauritania, Grapes, Bee, Flying, Haunted House
+- **Initial commit hash:** 3d911a7
+- **Pipeline commit hash:** 0ee2f3d
 
 ## Open Questions
-- Student ID needed for GitHub repo name (format: x1234567-innovator-critique)
-- Which 5 random parameters did the user receive from the innovator pipeline?
+- GitHub Pages deployment status — may need Actions workflow if legacy deploy doesn't trigger
+- prototype.html still needed (Part D) — must be reachable via GitHub Pages
 
 ## Active Risks & Blockers
 - 4-hour submission window — time management critical
-- Pipeline must be run first before any critique work can begin
+- GitHub Pages may need a few minutes to deploy; verify before submission
