@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HiveMap — Investor Pitch</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4A843;
+            --green: #4A7C59;
+            --dark: #1A1A1A;
+            --basalt: #2C2C2C;
+            --sand: #F5F0E8;
+            --amber: #E8960C;
+            --terra: #C65D3E;
+            --white: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--white);
+            background: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* === SLIDE SYSTEM === */
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            scroll-snap-align: start;
+            padding: 4rem;
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .slide-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide-overlay {
+            position: absolute;
+            inset: 0;
+        }
+
+        .slide-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-title {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-title em {
+            font-style: normal;
+            color: var(--gold);
+        }
+
+        .slide-subtitle {
+            font-size: 1.25rem;
+            font-weight: 300;
+            color: rgba(255,255,255,0.6);
+            max-width: 650px;
+            line-height: 1.7;
+        }
+
+        /* === HERO NUMBERS === */
+        .hero-number {
+            font-size: clamp(5rem, 12vw, 10rem);
+            font-weight: 900;
+            color: var(--gold);
+            line-height: 0.9;
+            letter-spacing: -4px;
+        }
+
+        .hero-number-label {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: rgba(255,255,255,0.6);
+            margin-top: 0.5rem;
+        }
+
+        /* === GRID LAYOUTS === */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* === CARDS === */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 2.5rem;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.6;
+        }
+
+        /* === DATA VIS (CSS) === */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 2rem;
+            height: 300px;
+            padding-top: 2rem;
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .bar {
+            width: 100%;
+            max-width: 80px;
+            background: var(--gold);
+            border-radius: 8px 8px 0 0;
+            transition: height 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
+        .bar-label {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+        }
+
+        /* Donut chart */
+        .donut-container {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+        }
+
+        .donut {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            position: relative;
+            background: conic-gradient(
+                var(--gold) 0% 30%,
+                var(--green) 30% 47.5%,
+                var(--amber) 47.5% 62.5%,
+                var(--terra) 62.5% 85%,
+                rgba(255,255,255,0.15) 85% 100%
+            );
+        }
+
+        .donut::after {
+            content: '';
+            position: absolute;
+            inset: 35%;
+            border-radius: 50%;
+            background: var(--dark);
+        }
+
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* === STEP FLOW === */
+        .flow {
+            display: flex;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .flow-step {
+            flex: 1;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '\2192';
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 1.5rem;
+            z-index: 3;
+        }
+
+        .flow-step:last-child::after { display: none; }
+
+        .flow-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--gold);
+            color: var(--dark);
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .flow-step h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-step p {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.5;
+        }
+
+        /* === COMPETITIVE TABLE === */
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .comp-table th {
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gold);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comp-table td {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comp-table tr.us td {
+            color: var(--white);
+            font-weight: 600;
+            background: rgba(212, 168, 67, 0.08);
+        }
+
+        .check { color: var(--green); }
+        .cross { color: var(--terra); }
+
+        /* === ASK SLIDE === */
+        .ask-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+
+        .ask-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .ask-pct {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--gold);
+        }
+
+        .ask-cat {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.25rem;
+        }
+
+        .ask-amount {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-top: 0.5rem;
+        }
+
+        /* === LESSONS === */
+        .lessons-list {
+            list-style: none;
+            max-width: 750px;
+        }
+
+        .lessons-list li {
+            padding: 1.25rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.75);
+            line-height: 1.5;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .lessons-list .lesson-num {
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 0.85rem;
+            min-width: 28px;
+        }
+
+        /* === NAV DOTS === */
+        .slide-nav {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .slide-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+        }
+
+        .slide-dot.active {
+            background: var(--gold);
+            transform: scale(1.3);
+        }
+
+        /* === PROGRESSIVE REVEAL === */
+        .reveal {
+            opacity: 0;
+            transform: translateY(25px);
+            transition: all 0.6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.15s; }
+        .reveal-delay-2 { transition-delay: 0.3s; }
+        .reveal-delay-3 { transition-delay: 0.45s; }
+        .reveal-delay-4 { transition-delay: 0.6s; }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 900px) {
+            .grid-2, .grid-3, .grid-4, .ask-grid { grid-template-columns: 1fr; }
+            .flow { flex-direction: column; }
+            .flow-step::after { display: none; }
+            .slide { padding: 2rem; }
+            .slide-nav { display: none; }
+            .bar-chart { height: 200px; }
+            .donut-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV DOTS -->
+    <div class="slide-nav" id="slideNav"></div>
+
+    <!-- SLIDE 1: TITLE -->
+    <section class="slide" id="slide-1">
+        <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=1920&q=80');"></div>
+        <div class="slide-overlay" style="background: linear-gradient(135deg, rgba(26,26,26,0.85) 0%, rgba(26,26,26,0.5) 100%);"></div>
+        <div class="slide-content" style="text-align: center;">
+            <div class="slide-label reveal">Seed Round — EUR 2M</div>
+            <h1 class="slide-title reveal reveal-delay-1" style="max-width: 900px; margin: 0 auto;">Hive<em>Map</em></h1>
+            <p class="slide-subtitle reveal reveal-delay-2" style="margin: 1.5rem auto 0; max-width: 600px; text-align: center;">Drone sensing meets traditional knowledge.<br>Unlocking abandoned Sahel land for smallholder farmers.</p>
+            <p style="margin-top: 3rem; font-size: 0.8rem; color: rgba(255,255,255,0.35);" class="reveal reveal-delay-3">Presented to YCombinator &middot; TechStars &middot; Dogpatch Labs &middot; BlackRock Capital</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: THE NUMBER -->
+    <section class="slide" id="slide-2" style="background: var(--dark);">
+        <div class="slide-content" style="text-align: center;">
+            <div class="hero-number reveal">12M</div>
+            <div class="hero-number-label reveal reveal-delay-1">hectares of abandoned farmland across the Sahel</div>
+            <p class="slide-subtitle reveal reveal-delay-2" style="margin: 2rem auto 0; text-align: center;">Invisible from the ground. Invisible from satellites.<br>Not invisible to drones.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: PROBLEM -->
+    <section class="slide" id="slide-3" style="background: var(--basalt);">
+        <div class="slide-content">
+            <div class="slide-label reveal">The Problem</div>
+            <h2 class="slide-title reveal reveal-delay-1">The best land is <em>hidden in plain sight.</em></h2>
+            <div class="grid-3" style="margin-top: 3rem;">
+                <div class="card reveal reveal-delay-1">
+                    <div class="card-icon">🛰️</div>
+                    <h3>Resolution Gap</h3>
+                    <p>Satellites can't see building-scale microclimates, underground springs, or wild bee colonies. 90% of viable micro-sites go undetected.</p>
+                </div>
+                <div class="card reveal reveal-delay-2">
+                    <div class="card-icon">🧓</div>
+                    <h3>Knowledge Dying</h3>
+                    <p>78% of traditional ecological knowledge holders are over 60. Their expertise has no digital interface. When they go, it goes.</p>
+                </div>
+                <div class="card reveal reveal-delay-3">
+                    <div class="card-icon">💰</div>
+                    <h3>Funding Misfire</h3>
+                    <p>Climate adaptation spending targets mega-projects. Zero investment in micro-scale, structure-based rehabilitation that delivers results 10x faster.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: SOLUTION -->
+    <section class="slide" id="slide-4">
+        <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=1920&q=80');"></div>
+        <div class="slide-overlay" style="background: linear-gradient(to right, rgba(26,26,26,0.92) 0%, rgba(26,26,26,0.7) 100%);"></div>
+        <div class="slide-content">
+            <div class="slide-label reveal">The Solution</div>
+            <h2 class="slide-title reveal reveal-delay-1">Fly. Listen. Score. <em>Activate.</em></h2>
+            <div class="flow" style="margin-top: 3rem;">
+                <div class="flow-step reveal reveal-delay-1">
+                    <div class="flow-num">1</div>
+                    <h4>Fly</h4>
+                    <p>Thermal + multispectral + LiDAR drones detect hidden structures, moisture & pollinators</p>
+                </div>
+                <div class="flow-step reveal reveal-delay-2">
+                    <div class="flow-num">2</div>
+                    <h4>Listen</h4>
+                    <p>Local elders annotate findings with traditional ecological knowledge on tablets</p>
+                </div>
+                <div class="flow-step reveal reveal-delay-3">
+                    <div class="flow-num">3</div>
+                    <h4>Score</h4>
+                    <p>Proprietary HiveMap Score ranks sites on 6 dimensions (water, pollinators, soil, structure, proximity, tenure)</p>
+                </div>
+                <div class="flow-step reveal reveal-delay-4">
+                    <div class="flow-num">4</div>
+                    <h4>Activate</h4>
+                    <p>Generate bankable rehabilitation plans with crop recs, cost estimates & 3-year P&L</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: MARKET -->
+    <section class="slide" id="slide-5" style="background: var(--dark);">
+        <div class="slide-content">
+            <div class="slide-label reveal">Market Opportunity</div>
+            <h2 class="slide-title reveal reveal-delay-1" style="margin-bottom: 3rem;">A <em>&euro;126M</em> annual market with zero incumbents.</h2>
+            <div class="grid-2">
+                <div class="bar-chart reveal reveal-delay-2">
+                    <div class="bar-group">
+                        <div class="bar" style="height: 8%; background: rgba(255,255,255,0.15);">
+                            <div class="bar-value">&euro;68K</div>
+                        </div>
+                        <div class="bar-label">Year 1</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 25%; background: rgba(212,168,67,0.5);">
+                            <div class="bar-value">&euro;393K</div>
+                        </div>
+                        <div class="bar-label">Year 2</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 55%; background: var(--gold);">
+                            <div class="bar-value">&euro;1.24M</div>
+                        </div>
+                        <div class="bar-label">Year 3</div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar" style="height: 100%; background: var(--green);">
+                            <div class="bar-value">&euro;3.8M</div>
+                        </div>
+                        <div class="bar-label">Year 5</div>
+                    </div>
+                </div>
+                <div>
+                    <div style="margin-bottom: 2rem;" class="reveal reveal-delay-2">
+                        <div style="font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px;">TAM</div>
+                        <div style="font-size: 2.5rem; font-weight: 900;">&euro;126M<span style="font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.5);"> /year</span></div>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">28,000 cooperatives across 6 Sahel countries</div>
+                    </div>
+                    <div style="margin-bottom: 2rem;" class="reveal reveal-delay-3">
+                        <div style="font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px;">SAM</div>
+                        <div style="font-size: 2.5rem; font-weight: 900;">&euro;37.8M<span style="font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.5);"> /year</span></div>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">8,400 cooperatives within existing NGO networks</div>
+                    </div>
+                    <div class="reveal reveal-delay-4">
+                        <div style="font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px;">SOM (Year 3)</div>
+                        <div style="font-size: 2.5rem; font-weight: 900;">&euro;1.24M</div>
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">250 cooperatives across 4 countries</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: COMPETITIVE -->
+    <section class="slide" id="slide-6" style="background: var(--basalt);">
+        <div class="slide-content">
+            <div class="slide-label reveal">Why Us</div>
+            <h2 class="slide-title reveal reveal-delay-1">Nobody else <em>connects the dots.</em></h2>
+            <table class="comp-table reveal reveal-delay-2">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Satellite Cos.</th>
+                        <th>Agri-Drone Cos.</th>
+                        <th>Dev Agencies</th>
+                        <th style="color: var(--white);">HiveMap</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Building-scale detection</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>TEK integration</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>End-to-end pipeline</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Pollinator-first scoring</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Sahel-native design</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                    <tr class="us">
+                        <td>Bankable project output</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="cross">&#10007;</td>
+                        <td class="check">&#10003;</td>
+                        <td class="check">&#10003;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: TRACTION -->
+    <section class="slide" id="slide-7" style="background: var(--dark);">
+        <div class="slide-content" style="text-align: center;">
+            <div class="slide-label reveal">Traction & Milestones</div>
+            <h2 class="slide-title reveal reveal-delay-1">From concept to <em>field-ready</em> in 14 weeks.</h2>
+            <div class="grid-4" style="margin-top: 3rem;">
+                <div class="card reveal reveal-delay-1" style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--gold);">Q3 '26</div>
+                    <p style="margin-top: 0.5rem;">Pilot launch<br>5 cooperatives</p>
+                </div>
+                <div class="card reveal reveal-delay-2" style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--gold);">Q4 '26</div>
+                    <p style="margin-top: 0.5rem;">Platform v1.0<br>Web + tablet</p>
+                </div>
+                <div class="card reveal reveal-delay-3" style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--gold);">Q2 '27</div>
+                    <p style="margin-top: 0.5rem;">Senegal expansion<br>80 cooperatives</p>
+                </div>
+                <div class="card reveal reveal-delay-4" style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--gold);">Q4 '28</div>
+                    <p style="margin-top: 0.5rem;">Carbon credits<br>verified & sold</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: THE ASK -->
+    <section class="slide" id="slide-8" style="background: var(--basalt);">
+        <div class="slide-content">
+            <div class="slide-label reveal">The Ask</div>
+            <h2 class="slide-title reveal reveal-delay-1"><em>&euro;2M</em> seed to prove the model.</h2>
+            <p class="slide-subtitle reveal reveal-delay-2">18-month runway to pilot, validate, and expand to 3 countries.</p>
+            <div class="ask-grid reveal reveal-delay-3">
+                <div class="ask-item">
+                    <div class="ask-pct">30%</div>
+                    <div class="ask-cat">Platform</div>
+                    <div class="ask-amount">&euro;600K</div>
+                </div>
+                <div class="ask-item">
+                    <div class="ask-pct">22.5%</div>
+                    <div class="ask-cat">Team</div>
+                    <div class="ask-amount">&euro;450K</div>
+                </div>
+                <div class="ask-item">
+                    <div class="ask-pct">17.5%</div>
+                    <div class="ask-cat">Drones & Hardware</div>
+                    <div class="ask-amount">&euro;350K</div>
+                </div>
+                <div class="ask-item">
+                    <div class="ask-pct">15%</div>
+                    <div class="ask-cat">Field Ops</div>
+                    <div class="ask-amount">&euro;300K</div>
+                </div>
+            </div>
+            <div class="donut-container reveal reveal-delay-4" style="margin-top: 3rem;">
+                <div class="donut"></div>
+                <div class="donut-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--gold);"></div> Platform Development (30%)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--green);"></div> Drone Fleet & Hardware (17.5%)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--amber);"></div> Field Operations (15%)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--terra);"></div> Personnel + Partnerships + Marketing (33.5%)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: rgba(255,255,255,0.15);"></div> Legal & Contingency (4%)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: TEAM -->
+    <section class="slide" id="slide-9">
+        <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80');"></div>
+        <div class="slide-overlay" style="background: rgba(26,26,26,0.9);"></div>
+        <div class="slide-content">
+            <div class="slide-label reveal">The Team</div>
+            <h2 class="slide-title reveal reveal-delay-1">Built by people who <em>know the land.</em></h2>
+            <div class="grid-4" style="margin-top: 3rem;">
+                <div class="card reveal reveal-delay-1" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🛩️</div>
+                    <h3 style="color: var(--white);">Aminata Sy</h3>
+                    <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 0.5rem;">CEO &middot; Drone Ops</p>
+                    <p>6 years flying agricultural survey missions across Mauritania and Senegal</p>
+                </div>
+                <div class="card reveal reveal-delay-2" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🌱</div>
+                    <h3 style="color: var(--white);">Dr. Ibrahim Keita</h3>
+                    <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 0.5rem;">Chief Agronomist</p>
+                    <p>PhD arid-zone agriculture, University of Nouakchott. Drought-resistant cultivar specialist</p>
+                </div>
+                <div class="card reveal reveal-delay-3" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
+                    <h3 style="color: var(--white);">Fatima Mint Ahmed</h3>
+                    <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 0.5rem;">Community Lead</p>
+                    <p>10 years UNDP cooperative formation and women's empowerment in the Sahel</p>
+                </div>
+                <div class="card reveal reveal-delay-4" style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🐝</div>
+                    <h3 style="color: var(--white);">Ousmane Diallo</h3>
+                    <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 0.5rem;">TEK Advisor</p>
+                    <p>Master beekeeper, Adrar region. 40 years of traditional desert apiculture</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: LESSONS LEARNED -->
+    <section class="slide" id="slide-10" style="background: var(--dark);">
+        <div class="slide-content">
+            <div class="slide-label reveal">Lessons Learned</div>
+            <h2 class="slide-title reveal reveal-delay-1">What this journey <em>taught us.</em></h2>
+            <ol class="lessons-list" style="margin-top: 3rem;">
+                <li class="reveal reveal-delay-1">
+                    <span class="lesson-num">01</span>
+                    <span>The most powerful sensor isn't on a drone — it's in the memory of a beekeeper who has read the desert for decades. Technology without indigenous knowledge is just expensive noise.</span>
+                </li>
+                <li class="reveal reveal-delay-1">
+                    <span class="lesson-num">02</span>
+                    <span>Abandoned doesn't mean empty. Colonial ruins, forgotten wells, and "haunted" buildings are ecological time capsules that preserved microclimates while the surrounding land degraded.</span>
+                </li>
+                <li class="reveal reveal-delay-2">
+                    <span class="lesson-num">03</span>
+                    <span>AI-generated market sizing sounds authoritative but demands verification. Every statistic in an AI pipeline must be treated as a hypothesis until independently confirmed.</span>
+                </li>
+                <li class="reveal reveal-delay-2">
+                    <span class="lesson-num">04</span>
+                    <span>The Sahel doesn't need more pilot projects — it needs pilots that come with a business model attached. Impact without sustainability is just expensive tourism.</span>
+                </li>
+                <li class="reveal reveal-delay-3">
+                    <span class="lesson-num">05</span>
+                    <span>Building for extreme environments forces better design. Offline-first, heat-resistant hardware, multilingual interfaces — constraints that make the product stronger everywhere.</span>
+                </li>
+                <li class="reveal reveal-delay-3">
+                    <span class="lesson-num">06</span>
+                    <span>Carbon credits are a revenue stream, not a mission. The moment carbon math drives decisions instead of farmer outcomes, the model fails ethically and commercially.</span>
+                </li>
+                <li class="reveal reveal-delay-4">
+                    <span class="lesson-num">07</span>
+                    <span>From five random parameters to a full venture concept in hours — AI radically compresses ideation, but judgement, critique, and domain knowledge remain irreplaceably human.</span>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <script>
+        // Build nav dots
+        const slides = document.querySelectorAll('.slide');
+        const navContainer = document.getElementById('slideNav');
+        slides.forEach((slide, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'slide-dot';
+            dot.setAttribute('aria-label', `Slide ${i + 1}`);
+            dot.addEventListener('click', () => slide.scrollIntoView({ behavior: 'smooth' }));
+            navContainer.appendChild(dot);
+        });
+
+        // Active dot tracking
+        const dots = document.querySelectorAll('.slide-dot');
+        const slideObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const idx = Array.from(slides).indexOf(entry.target);
+                    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                }
+            });
+        }, { threshold: 0.5 });
+
+        slides.forEach(s => slideObserver.observe(s));
+
+        // Progressive reveal
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    </script>
+
+</body>
+</html>

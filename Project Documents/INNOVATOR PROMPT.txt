@@ -1,0 +1,36 @@
+INSTRUCTIONS: Execute each step in sequence, ensuring that the output of each step is the input for the next one. IMPORTANT: Save every step's output as a separate file in the project folder so the full creative trail is preserved (see step h for the file structure).
+
+(a) Based on these parameters:
+
+country 🇲🇷
+fruit 🍇
+animal 🐝
+action 🧑‍✈️
+fifth parameter [Haunted House]🏚️
+
+write a short story in a single paragraph.
+
+(b) Take that short story and transform it into an academic research question.
+
+(c) Conduct brief research focused on diagnosing a problem or opportunity. The output here will be a clear problem statement that includes a narrow customer/user segment in any sector (public or private)
+
+(d) Design a solution for it. This offering could be a physical product, a service or a hybrid solution. Define who the provider is, e.g., a startup, a branch of government or agency, a corporation, a non-profit organisation, etc.
+
+(e) Build a prototype complete with its design specs.
+
+(f) Create a world-class landing page for it (output as html file). Ensure it has one to three real-world photos. Again the design must be top-notch. Open the html page when finished.
+
+(g) Design a very professional business plan and a marketing campaign. Pitch this to investors (including reps from YCombinator, Tech Stars, Dogpatch Labs, and Blackrock Capital). Create the slides for this (html) and open them in a style aligned with the landing page. The slides must be visually striking, not text-heavy: use bold single-line statements, large hero numbers, real-world photos (via Unsplash or Pexels URLs), simple data visualisations built in CSS, and pull the same colour palette, typography, and design language from the landing page. Each slide should feel like a full-bleed magazine spread, not a bullet-point document. Minimise words per slide; maximise visual impact. When relevant, add progressive reveal of key elements within slides. Title the last slide 'Lessons Learned' and write 6 or 7 bullet points reflecting on the whole experience. Give it a favicon.
+
+(h) Create the project folder at ~/ai-innovator/projects/[ProjectName]/ (create directories if needed). ProjectName should be the name of your solution. Save each step as a separate file so the full innovation trail is preserved:
+
+  01-story.md          (the short story from step a)
+  02-research-question.md  (the research question from step b)
+  03-problem-statement.md  (the problem statement from step c)
+  04-solution-design.md    (the solution design from step d)
+  05-prototype.md          (prototype and design specs from step e)
+  index.html               (the landing page from step f)
+  pitch.html               (the pitch deck from step g)
+  07-business-plan.md      (the business plan and marketing campaign from step g)
+
+Commit to corresponding GitHub repository then publish to a live GitHub Page and open it. Give it a favicon. (Skip this step only if you do not have these skills or permissions).
