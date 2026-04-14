@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HiveMap — Alpha Prototype</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4A843;
+            --green: #4A7C59;
+            --dark: #1A1A1A;
+            --basalt: #2C2C2C;
+            --sand: #F5F0E8;
+            --amber: #E8960C;
+            --terra: #C65D3E;
+            --white: #FFFFFF;
+            --sidebar-w: 380px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--white);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === TOP BAR === */
+        .topbar {
+            height: 56px;
+            background: var(--basalt);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 100;
+        }
+
+        .topbar-logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+
+        .topbar-logo span { color: var(--gold); }
+
+        .topbar-badge {
+            background: rgba(212,168,67,0.15);
+            border: 1px solid rgba(212,168,67,0.3);
+            color: var(--gold);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .topbar-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .topbar-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .topbar-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+        }
+
+        .topbar-btn.active {
+            background: rgba(212,168,67,0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* === LAYOUT === */
+        .app {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+
+        /* === MAP AREA === */
+        .map-area {
+            flex: 1;
+            position: relative;
+            background: #1a2332;
+            overflow: hidden;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Simulated map grid */
+        .map-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Terrain features */
+        .terrain {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.15;
+        }
+
+        .terrain-1 { width: 300px; height: 200px; background: #4A7C59; top: 10%; left: 5%; border-radius: 40%; }
+        .terrain-2 { width: 400px; height: 250px; background: #8B7355; top: 30%; left: 25%; border-radius: 35%; }
+        .terrain-3 { width: 250px; height: 180px; background: #4A7C59; top: 60%; left: 55%; border-radius: 45%; }
+        .terrain-4 { width: 350px; height: 200px; background: #8B7355; top: 15%; left: 60%; border-radius: 38%; }
+
+        /* Survey zone overlay */
+        .survey-zone {
+            position: absolute;
+            border: 2px dashed rgba(212,168,67,0.4);
+            border-radius: 8px;
+            top: 8%;
+            left: 5%;
+            right: 5%;
+            bottom: 8%;
+        }
+
+        .survey-zone-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--dark);
+            color: var(--gold);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Site markers */
+        .site-marker {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .site-marker:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 20;
+        }
+
+        .site-marker.selected {
+            transform: translate(-50%, -50%) scale(1.4);
+            z-index: 20;
+            box-shadow: 0 0 0 4px rgba(212,168,67,0.4);
+        }
+
+        .site-marker.high { background: var(--green); color: var(--white); }
+        .site-marker.medium { background: var(--amber); color: var(--dark); }
+        .site-marker.low { background: var(--terra); color: var(--white); }
+
+        .site-marker-label {
+            position: absolute;
+            bottom: -18px;
+            white-space: nowrap;
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+        }
+
+        /* Pulse animation for high-score sites */
+        .site-marker.high::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        /* TEK annotation markers */
+        .tek-marker {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: rgba(232,150,12,0.2);
+            border: 1.5px solid var(--amber);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            transition: all 0.2s;
+        }
+
+        .tek-marker:hover {
+            background: rgba(232,150,12,0.4);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .tek-marker.hidden { display: none; }
+
+        /* TEK tooltip */
+        .tek-tooltip {
+            position: absolute;
+            background: var(--basalt);
+            border: 1px solid var(--amber);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            max-width: 220px;
+            z-index: 30;
+            display: none;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.4;
+        }
+
+        .tek-tooltip.visible { display: block; }
+
+        .tek-tooltip-author {
+            color: var(--amber);
+            font-weight: 600;
+            font-size: 0.65rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Map legend */
+        .map-legend {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            background: rgba(26,26,26,0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 1rem;
+            z-index: 20;
+        }
+
+        .map-legend h4 {
+            font-size: 0.7rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.35rem;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-sq {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            background: rgba(232,150,12,0.3);
+            border: 1px solid var(--amber);
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--basalt);
+            border-left: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .sidebar-section {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .sidebar-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Score display */
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin: 1rem 0;
+        }
+
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .score-circle.high { background: rgba(74,124,89,0.2); border: 3px solid var(--green); }
+        .score-circle.medium { background: rgba(232,150,12,0.15); border: 3px solid var(--amber); }
+        .score-circle.low { background: rgba(198,93,62,0.15); border: 3px solid var(--terra); }
+
+        .score-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-label-sm {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .score-summary {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+        }
+
+        /* Score breakdown bars */
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .score-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .score-bar-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            width: 80px;
+            flex-shrink: 0;
+        }
+
+        .score-bar-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .score-bar-value {
+            font-size: 0.7rem;
+            font-weight: 600;
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* Site list */
+        .site-list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 6px;
+            padding-left: 0.5rem;
+        }
+
+        .site-list-item:hover { background: rgba(255,255,255,0.04); }
+        .site-list-item.selected { background: rgba(212,168,67,0.1); }
+
+        .site-list-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .site-list-info { flex: 1; }
+
+        .site-list-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .site-list-meta {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .site-list-score {
+            font-size: 0.85rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Activation plan */
+        .activation-plan {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .plan-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .plan-row:last-child { border: none; }
+
+        .plan-label { color: rgba(255,255,255,0.5); }
+        .plan-value { font-weight: 600; }
+
+        .btn-activate {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-activate:hover {
+            background: #c49a3a;
+            transform: translateY(-1px);
+        }
+
+        /* Report modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.visible { display: flex; }
+
+        .modal {
+            background: var(--basalt);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-section h3 {
+            font-size: 0.8rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-section p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .modal-table th {
+            text-align: left;
+            color: var(--gold);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-table td {
+            padding: 0.5rem;
+            color: rgba(255,255,255,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        /* Responsive */
+        @media (max-width: 800px) {
+            .sidebar { width: 100%; position: absolute; bottom: 0; height: 50vh; z-index: 50; }
+            :root { --sidebar-w: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <div class="topbar-logo">Hive<span>Map</span></div>
+            <div class="topbar-badge">Alpha Prototype</div>
+        </div>
+        <div class="topbar-controls">
+            <button class="topbar-btn active" id="btnTEK" onclick="toggleTEK()">TEK Annotations</button>
+            <button class="topbar-btn" id="btnThermal" onclick="toggleThermal()">Thermal View</button>
+            <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Adrar Region, Mauritania</span>
+        </div>
+    </div>
+
+    <!-- APP LAYOUT -->
+    <div class="app">
+
+        <!-- MAP -->
+        <div class="map-area" id="mapArea">
+            <div class="map-canvas" id="mapCanvas">
+                <div class="map-grid"></div>
+
+                <!-- Terrain -->
+                <div class="terrain terrain-1"></div>
+                <div class="terrain terrain-2"></div>
+                <div class="terrain terrain-3"></div>
+                <div class="terrain terrain-4"></div>
+
+                <!-- Survey zone -->
+                <div class="survey-zone">
+                    <div class="survey-zone-label">Survey Zone A-7 (20 km2)</div>
+                </div>
+
+                <!-- Site markers (positioned as %) -->
+                <div class="site-marker high" style="left:25%;top:30%;" data-site="0" onclick="selectSite(0)">
+                    82
+                    <div class="site-marker-label">Maison Gris</div>
+                </div>
+                <div class="site-marker high" style="left:60%;top:25%;" data-site="1" onclick="selectSite(1)">
+                    74
+                    <div class="site-marker-label">Wadi Terrace</div>
+                </div>
+                <div class="site-marker medium" style="left:45%;top:55%;" data-site="2" onclick="selectSite(2)">
+                    61
+                    <div class="site-marker-label">Old Station</div>
+                </div>
+                <div class="site-marker medium" style="left:70%;top:60%;" data-site="3" onclick="selectSite(3)">
+                    53
+                    <div class="site-marker-label">Well Compound</div>
+                </div>
+                <div class="site-marker low" style="left:20%;top:70%;" data-site="4" onclick="selectSite(4)">
+                    38
+                    <div class="site-marker-label">Stone Ruin E</div>
+                </div>
+                <div class="site-marker low" style="left:80%;top:40%;" data-site="5" onclick="selectSite(5)">
+                    29
+                    <div class="site-marker-label">Collapsed Wall</div>
+                </div>
+
+                <!-- TEK annotations -->
+                <div class="tek-marker" style="left:23%;top:26%;" data-tek="0" onclick="showTEK(event, 0)">💧</div>
+                <div class="tek-marker" style="left:28%;top:34%;" data-tek="1" onclick="showTEK(event, 1)">🐝</div>
+                <div class="tek-marker" style="left:58%;top:20%;" data-tek="2" onclick="showTEK(event, 2)">🌿</div>
+                <div class="tek-marker" style="left:48%;top:52%;" data-tek="3" onclick="showTEK(event, 3)">🏚️</div>
+                <div class="tek-marker" style="left:63%;top:28%;" data-tek="4" onclick="showTEK(event, 4)">💧</div>
+
+                <!-- TEK tooltip -->
+                <div class="tek-tooltip" id="tekTooltip"></div>
+            </div>
+
+            <!-- Legend -->
+            <div class="map-legend">
+                <h4>HiveMap Score</h4>
+                <div class="legend-row"><div class="legend-dot" style="background:var(--green);"></div> High (70-100)</div>
+                <div class="legend-row"><div class="legend-dot" style="background:var(--amber);"></div> Medium (40-69)</div>
+                <div class="legend-row"><div class="legend-dot" style="background:var(--terra);"></div> Low (0-39)</div>
+                <div class="legend-row" style="margin-top:0.5rem;"><div class="legend-sq"></div> TEK Annotation</div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            <!-- Site list (default view) -->
+            <div class="sidebar-section" id="siteListSection">
+                <div class="sidebar-label">Detected Sites (6)</div>
+                <div id="siteList"></div>
+            </div>
+
+            <!-- Site detail (shown on selection) -->
+            <div id="siteDetail" style="display:none;">
+                <div class="sidebar-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="sidebar-label" id="detailLabel">Site Detail</div>
+                        <button class="topbar-btn" onclick="deselectSite()" style="font-size:0.7rem;padding:0.25rem 0.6rem;">Back</button>
+                    </div>
+                    <div class="sidebar-title" id="detailName"></div>
+                    <div class="sidebar-subtitle" id="detailType"></div>
+
+                    <div class="score-display">
+                        <div class="score-circle" id="detailScoreCircle">
+                            <div class="score-value" id="detailScoreValue"></div>
+                            <div class="score-label-sm">Score</div>
+                        </div>
+                        <div class="score-summary" id="detailSummary"></div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Score Breakdown</div>
+                    <div class="score-breakdown" id="scoreBreakdown"></div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Activation Summary</div>
+                    <div class="activation-plan" id="activationPlan"></div>
+                    <button class="btn-activate" onclick="generateReport()">Generate Full Activation Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT MODAL -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal" style="position:relative;">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 id="reportTitle"></h2>
+            <div class="modal-subtitle" id="reportSubtitle"></div>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // === DATA ===
+        const sites = [
+            {
+                name: "Maison Gris",
+                type: "Colonial estate ruins",
+                score: 82,
+                lat: "20.5147N", lng: "13.0628W",
+                summary: "Thick-walled colonial villa with intact cellar. Underground spring detected. Large wild bee colony confirmed by TEK.",
+                breakdown: { water: 90, pollinators: 95, structure: 75, soil: 80, proximity: 65, tenure: 70 },
+                crops: ["Desert grape hybrid", "Date palm", "Moringa"],
+                rehabCost: "EUR 18,500",
+                yearlyRevenue: "EUR 8,200",
+                payback: "2.3 years"
+            },
+            {
+                name: "Wadi Terrace",
+                type: "Ancient agricultural terrace",
+                score: 74,
+                lat: "20.5231N", lng: "13.0412W",
+                summary: "Terraced wadi banks with seasonal water flow. Wild grape remnants detected via NDVI. Moderate bee activity.",
+                breakdown: { water: 85, pollinators: 60, structure: 55, soil: 90, proximity: 70, tenure: 80 },
+                crops: ["Acacia senegal", "Sorghum", "Cowpea"],
+                rehabCost: "EUR 12,300",
+                yearlyRevenue: "EUR 6,800",
+                payback: "1.8 years"
+            },
+            {
+                name: "Old Station",
+                type: "Abandoned government ag station",
+                score: 61,
+                lat: "20.4983N", lng: "13.0515W",
+                summary: "Former agricultural extension station. Concrete foundations intact. Some moisture detected but no active pollinators.",
+                breakdown: { water: 55, pollinators: 30, structure: 90, soil: 65, proximity: 80, tenure: 50 },
+                crops: ["Moringa", "Jujube", "Millet"],
+                rehabCost: "EUR 22,000",
+                yearlyRevenue: "EUR 5,100",
+                payback: "4.3 years"
+            },
+            {
+                name: "Well Compound",
+                type: "Traditional stone compound",
+                score: 53,
+                lat: "20.4876N", lng: "13.0287W",
+                summary: "Collapsed stone compound near inactive well. TEK holder reports historical water availability. Tenure disputed.",
+                breakdown: { water: 70, pollinators: 40, structure: 35, soil: 55, proximity: 75, tenure: 20 },
+                crops: ["Date palm", "Henna"],
+                rehabCost: "EUR 28,000",
+                yearlyRevenue: "EUR 3,900",
+                payback: "7.2 years"
+            },
+            {
+                name: "Stone Ruin E",
+                type: "Unknown origin structure",
+                score: 38,
+                lat: "20.5042N", lng: "13.0701W",
+                summary: "Fragmentary stone ruins. No moisture signature. Minimal vegetation. Remote from cooperative.",
+                breakdown: { water: 20, pollinators: 15, structure: 25, soil: 40, proximity: 30, tenure: 90 },
+                crops: ["Not recommended at this time"],
+                rehabCost: "N/A",
+                yearlyRevenue: "N/A",
+                payback: "N/A"
+            },
+            {
+                name: "Collapsed Wall",
+                type: "Boundary wall fragment",
+                score: 29,
+                lat: "20.5198N", lng: "13.0189W",
+                summary: "Single collapsed wall section. No microclimate detected. No pollinator activity. Not viable for rehabilitation.",
+                breakdown: { water: 10, pollinators: 5, structure: 10, soil: 30, proximity: 55, tenure: 85 },
+                crops: ["Not recommended at this time"],
+                rehabCost: "N/A",
+                yearlyRevenue: "N/A",
+                payback: "N/A"
+            }
+        ];
+
+        const tekAnnotations = [
+            { text: "Underground spring — my grandfather watered goats here until 1985. Water comes in October after rains.", author: "Ousmane D., beekeeper, age 72" },
+            { text: "Bee colony in east wall, active since at least 2010. They fly toward the wadi every morning. Good honey.", author: "Ousmane D., beekeeper, age 72" },
+            { text: "Wild grapes here — we used to eat them as children. They fruit in November when the wadi has water.", author: "Mariam M., herder, age 65" },
+            { text: "This building was a French seed store. The floor is concrete, still solid. Roof collapsed in 2003 storm.", author: "Ahmed S., farmer, age 78" },
+            { text: "Seasonal spring — flows for 2-3 months after rains. Good water, animals drink here.", author: "Mariam M., herder, age 65" }
+        ];
+
+        let selectedSite = null;
+        let tekVisible = true;
+
+        // === BUILD SITE LIST ===
+        function buildSiteList() {
+            const list = document.getElementById('siteList');
+            list.innerHTML = sites.map((s, i) => {
+                const cls = s.score >= 70 ? 'high' : s.score >= 40 ? 'medium' : 'low';
+                const color = cls === 'high' ? 'var(--green)' : cls === 'medium' ? 'var(--amber)' : 'var(--terra)';
+                return `<div class="site-list-item" data-idx="${i}" onclick="selectSite(${i})">
+                    <div class="site-list-dot" style="background:${color};color:${cls==='medium'?'var(--dark)':'var(--white)'}">${s.score}</div>
+                    <div class="site-list-info">
+                        <div class="site-list-name">${s.name}</div>
+                        <div class="site-list-meta">${s.type}</div>
+                    </div>
+                    <div class="site-list-score" style="color:${color}">${s.score}/100</div>
+                </div>`;
+            }).join('');
+        }
+
+        // === SELECT SITE ===
+        function selectSite(idx) {
+            selectedSite = idx;
+            const s = sites[idx];
+            const cls = s.score >= 70 ? 'high' : s.score >= 40 ? 'medium' : 'low';
+
+            document.getElementById('siteListSection').style.display = 'none';
+            document.getElementById('siteDetail').style.display = 'block';
+
+            document.getElementById('detailName').textContent = s.name;
+            document.getElementById('detailType').textContent = `${s.type} | ${s.lat}, ${s.lng}`;
+            document.getElementById('detailScoreValue').textContent = s.score;
+            document.getElementById('detailSummary').textContent = s.summary;
+
+            const circle = document.getElementById('detailScoreCircle');
+            circle.className = `score-circle ${cls}`;
+
+            // Score breakdown
+            const dims = ['water', 'pollinators', 'structure', 'soil', 'proximity', 'tenure'];
+            const weights = { water: '30%', pollinators: '20%', structure: '15%', soil: '15%', proximity: '10%', tenure: '10%' };
+            const colors = { water: '#4A9BD9', pollinators: '#E8960C', structure: '#8B7355', soil: '#4A7C59', proximity: '#7B68EE', tenure: '#C65D3E' };
+
+            document.getElementById('scoreBreakdown').innerHTML = dims.map(d => {
+                const val = s.breakdown[d];
+                return `<div class="score-bar-row">
+                    <div class="score-bar-label">${d.charAt(0).toUpperCase() + d.slice(1)} (${weights[d]})</div>
+                    <div class="score-bar-track"><div class="score-bar-fill" style="width:${val}%;background:${colors[d]}"></div></div>
+                    <div class="score-bar-value">${val}</div>
+                </div>`;
+            }).join('');
+
+            // Activation plan
+            document.getElementById('activationPlan').innerHTML = `
+                <div class="plan-row"><span class="plan-label">Recommended Crops</span><span class="plan-value">${s.crops.join(', ')}</span></div>
+                <div class="plan-row"><span class="plan-label">Rehab Cost (est.)</span><span class="plan-value">${s.rehabCost}</span></div>
+                <div class="plan-row"><span class="plan-label">Yearly Revenue (est.)</span><span class="plan-value">${s.yearlyRevenue}</span></div>
+                <div class="plan-row"><span class="plan-label">Payback Period</span><span class="plan-value">${s.payback}</span></div>
+            `;
+
+            // Highlight marker
+            document.querySelectorAll('.site-marker').forEach(m => m.classList.remove('selected'));
+            document.querySelector(`.site-marker[data-site="${idx}"]`).classList.add('selected');
+        }
+
+        function deselectSite() {
+            selectedSite = null;
+            document.getElementById('siteListSection').style.display = 'block';
+            document.getElementById('siteDetail').style.display = 'none';
+            document.querySelectorAll('.site-marker').forEach(m => m.classList.remove('selected'));
+        }
+
+        // === TEK ===
+        function toggleTEK() {
+            tekVisible = !tekVisible;
+            document.querySelectorAll('.tek-marker').forEach(m => m.classList.toggle('hidden', !tekVisible));
+            document.getElementById('btnTEK').classList.toggle('active', tekVisible);
+            document.getElementById('tekTooltip').classList.remove('visible');
+        }
+
+        function showTEK(event, idx) {
+            event.stopPropagation();
+            const tek = tekAnnotations[idx];
+            const tooltip = document.getElementById('tekTooltip');
+            const marker = event.target;
+            const rect = marker.getBoundingClientRect();
+            const mapRect = document.getElementById('mapCanvas').getBoundingClientRect();
+
+            tooltip.innerHTML = `${tek.text}<div class="tek-tooltip-author">${tek.author}</div>`;
+            tooltip.style.left = (rect.left - mapRect.left + 30) + 'px';
+            tooltip.style.top = (rect.top - mapRect.top - 10) + 'px';
+            tooltip.classList.add('visible');
+        }
+
+        function toggleThermal() {
+            const map = document.getElementById('mapArea');
+            const btn = document.getElementById('btnThermal');
+            const isThermal = btn.classList.toggle('active');
+            map.style.background = isThermal
+                ? 'linear-gradient(135deg, #1a0a2e 0%, #0d1b2a 30%, #1b2838 60%, #2a1a0a 100%)'
+                : '#1a2332';
+            document.querySelectorAll('.terrain').forEach(t => {
+                t.style.opacity = isThermal ? '0.3' : '0.15';
+                if (isThermal) {
+                    t.style.background = t.classList.contains('terrain-1') || t.classList.contains('terrain-3')
+                        ? '#ff4444' : '#ff8800';
+                } else {
+                    t.style.background = t.classList.contains('terrain-1') || t.classList.contains('terrain-3')
+                        ? '#4A7C59' : '#8B7355';
+                }
+            });
+        }
+
+        // === REPORT ===
+        function generateReport() {
+            if (selectedSite === null) return;
+            const s = sites[selectedSite];
+            document.getElementById('reportTitle').textContent = `Activation Report: ${s.name}`;
+            document.getElementById('reportSubtitle').textContent = `Generated by HiveMap | ${s.lat}, ${s.lng} | HiveMap Score: ${s.score}/100`;
+
+            document.getElementById('reportContent').innerHTML = `
+                <div class="modal-section">
+                    <h3>Site Overview</h3>
+                    <p>${s.summary}</p>
+                </div>
+                <div class="modal-section">
+                    <h3>Score Breakdown</h3>
+                    <table class="modal-table">
+                        <tr><th>Dimension</th><th>Weight</th><th>Score</th></tr>
+                        <tr><td>Water Availability</td><td>30%</td><td>${s.breakdown.water}/100</td></tr>
+                        <tr><td>Pollinator Presence</td><td>20%</td><td>${s.breakdown.pollinators}/100</td></tr>
+                        <tr><td>Structural Reusability</td><td>15%</td><td>${s.breakdown.structure}/100</td></tr>
+                        <tr><td>Soil Potential</td><td>15%</td><td>${s.breakdown.soil}/100</td></tr>
+                        <tr><td>Proximity</td><td>10%</td><td>${s.breakdown.proximity}/100</td></tr>
+                        <tr><td>Tenure Clarity</td><td>10%</td><td>${s.breakdown.tenure}/100</td></tr>
+                    </table>
+                </div>
+                <div class="modal-section">
+                    <h3>Recommended Crops</h3>
+                    <p>${s.crops.join(', ')}</p>
+                </div>
+                <div class="modal-section">
+                    <h3>Financial Projection (3-Year)</h3>
+                    <table class="modal-table">
+                        <tr><th>Item</th><th>Value</th></tr>
+                        <tr><td>Rehabilitation Cost</td><td>${s.rehabCost}</td></tr>
+                        <tr><td>Estimated Yearly Revenue</td><td>${s.yearlyRevenue}</td></tr>
+                        <tr><td>Payback Period</td><td>${s.payback}</td></tr>
+                    </table>
+                </div>
+                <div class="modal-section">
+                    <h3>Disclaimer</h3>
+                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);">This is a prototype demonstration. All data is simulated for illustrative purposes. Financial projections are estimates and have not been independently verified. This report does not constitute investment advice.</p>
+                </div>
+            `;
+
+            document.getElementById('reportModal').classList.add('visible');
+        }
+
+        function closeModal() {
+            document.getElementById('reportModal').classList.remove('visible');
+        }
+
+        // Close tooltip on map click
+        document.getElementById('mapCanvas').addEventListener('click', (e) => {
+            if (!e.target.classList.contains('tek-marker')) {
+                document.getElementById('tekTooltip').classList.remove('visible');
+            }
+        });
+
+        // Init
+        buildSiteList();
+    </script>
+
+</body>
+</html>
